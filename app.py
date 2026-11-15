@@ -16,7 +16,7 @@ import streamlit as st
 from components.charts import daily_units_chart, top_skus_chart
 from data.loaders import load_sales
 
-DATA = Path(__file__).resolve().parents[2] / "data" / "sales_daily.csv"
+DATA = Path(__file__).parent / "sales_daily.csv"
 
 st.set_page_config(page_title="Sales Explorer", layout="wide")
 st.title("Sales Explorer")
