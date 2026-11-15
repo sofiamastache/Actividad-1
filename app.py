@@ -11,27 +11,30 @@ app.py and change DATA to Path(__file__).parent / "sales_daily.csv".
 """
 from pathlib import Path
 
-import pandas as pd
-import plotly.express as px
 import streamlit as st
 
-DATA = Path(__file__).parent / "sales_daily.csv"
+from components.charts import daily_units_chart, top_skus_chart
+from data.loaders import load_sales
+
+DATA = Path(__file__).resolve().parents[2] / "data" / "sales_daily.csv"
 
 st.set_page_config(page_title="Sales Explorer", layout="wide")
 st.title("Sales Explorer")
 
-df = pd.read_csv(DATA, parse_dates=["date"])
+
+df = load_sales(DATA)
 
 # TODO 1: add a region filter (st.selectbox or st.multiselect) and filter df
 # TODO 2: add a category filter the same way
 regions = sorted(df['region'].unique())
 categories = sorted(df['category'].unique())
-select_regions = st.multiselect('Region', regions, default = regions)
-select_category = st.multiselect('Category', categories, default = categories)
+select_regions = st.sidebar.multiselect('Region', regions, default = regions)
+select_category = st.sidebar.multiselect('Category', categories, default = categories)
 df = df[df['region'].isin(select_regions) & df['category'].isin(select_category)]
-daily = df.groupby("date", as_index=False)["units"].sum()
-fig = px.line(daily, x="date", y="units", title="Daily units")
-st.plotly_chart(fig, width="stretch")
+#que hacer si seleccion vacia
+if df.empty:
+  st.warning('Advertencia: No se encontraton datos')
+  st.stop()
 
 # TODO 3: add KPI cards with st.columns + st.metric (total units, revenue, # SKUs)
 #total units
@@ -46,9 +49,9 @@ c2.metric('Revenue', f'${revenue_total:,.0f}')
 c3.metric('# SKUs', f'{num_sku:,}')
 
 # TODO 4: add a second chart: top 10 SKUs by revenue (px.bar)
-num_sku_graph = df.groupby("sku", as_index=False)["revenue"].sum().nlargest(10, 'revenue')
-fig_sku = px.bar(num_sku_graph, x="sku", y="revenue", title="Top 10 SKUs by Revenue")
-st.plotly_chart(fig_sku, width="stretch")
+#graficas
+st.plotly_chart(daily_units_chart(df), width="stretch")
+st.plotly_chart(top_skus_chart(df), width="stretch")
 
 # TODO 5 (stretch): show the filtered rows in st.dataframe inside an st.expander
 with st.expander("Ver datos filtrados"):
